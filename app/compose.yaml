@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    ports:
+    - "8080:8080"
+    volumes:
+      - "./:/go/src/github.com/Le-BlitzZz/blockchain-auth-app/app"
+      - "go-mod:/go/pkg/mod"
+    working_dir: /go/src/github.com/Le-BlitzZz/blockchain-auth-app/app
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - "redis:/data"
+
+  hardhat:
+    image: node:18
+    working_dir: /usr/src/app
+    volumes:
+      - "./:/usr/src/app"
+    ports:
+      - "8545:8545"
+    command: ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
+
+volumes:
+  go-mod:
+    driver: local
+  redis:
+    driver: local
