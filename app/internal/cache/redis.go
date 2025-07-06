@@ -1,4 +1,4 @@
-package request
+package cache
 
 import (
 	"github.com/redis/go-redis/v9"
@@ -13,7 +13,7 @@ func SetRedis(client *redis.Client) {
 
 func Redis() *redis.Client {
 	if redisClient == nil {
-		log.Panic("request.Redis() called before request.SetRedis()")
+		log.Panic("cache.Redis() called before cache.SetRedis()")
 	}
 	return redisClient
 }

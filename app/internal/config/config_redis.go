@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/request"
+	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/cache"
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 )
@@ -48,7 +48,7 @@ func (c *Config) closeRedis() error {
 	if c.redis != nil {
 		if err := c.redis.Close(); err == nil {
 			c.redis = nil
-			request.SetRedis(nil)
+			cache.SetRedis(nil)
 		} else {
 			return err
 		}

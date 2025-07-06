@@ -21,6 +21,11 @@ func registerRoutes(router *gin.Engine, conf *config.Config) {
 	api.ActionAuth(API, redis)
 	api.ActionVerify(API, redis)
 	api.ActionComplete(API, conf)
+
+	api.CreateSession(API)
+	api.UpdateSession(API)
+	api.DeleteSession(API)
+	api.StreamSessionEvents(API)
 }
 
 func registerStaticRoutes(router *gin.Engine, redisClient *redis.Client) {
