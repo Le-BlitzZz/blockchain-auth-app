@@ -1,11 +1,20 @@
 up:
-	docker compose up
+	docker compose up -d
+
+down:
+	docker compose down
+
+cleanup:
+	docker compose down -v
 
 terminal:
 	docker compose exec -u root app bash
 
 terminal-hardhat:
 	docker compose exec -u root hardhat bash
+
+terminal-redis:
+	docker compose exec -u root redis redis-cli
 
 build:
 	go build -o bin/app ./cmd/app/main.go

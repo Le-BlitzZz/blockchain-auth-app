@@ -55,8 +55,8 @@ func ActionVerify(router *gin.RouterGroup, redisClient *redis.Client) {
 
 		if !verifyEthereumSignature(address, req.Message, req.Signature) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature"})
-            return
-        }
+			return
+		}
 
 		if err := redisClient.HSet(c, key, "state", "verified").Err(); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update session"})

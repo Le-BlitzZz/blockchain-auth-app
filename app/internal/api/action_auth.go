@@ -24,7 +24,6 @@ func ActionAuth(router *gin.RouterGroup, redisClient *redis.Client) {
 			return
 		}
 
-
 		key := "session:" + req.SessionID
 		vals, err := redisClient.HMGet(c, key, "state", "action").Result()
 		if err != nil {

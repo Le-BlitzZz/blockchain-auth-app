@@ -7,52 +7,74 @@ import (
 
 	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/cache"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
-
-type Action struct {
-	Name string `json:"name" binding:"required,oneof=vip mint burn"`
-}
 
 func CreateSession(router *gin.RouterGroup) {
 	router.POST("/session", func(c *gin.Context) {
-		var action Action
-		if err := c.ShouldBindJSON(&action); err != nil {
+		var body struct {
+			Action string `json:"action" binding:"required,oneof=vip mint burn"`
+		}
+		if err := c.ShouldBindJSON(&body); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
-		sess, err := cache.NewSession(c, action.Name)
-		if err != nil {
+		session := cache.NewSession(c, body.Action)
+
+		if err := session.Create(c); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, sessionResponse(sess.ID))
+		c.JSON(http.StatusOK, sessionResponse(session.ID))
 	})
 }
 
 func UpdateSession(router *gin.RouterGroup) {
-	router.PUT("/session/:id", func(c *gin.Context) {
-		var timeout time.Duration
-
-		status := c.Query("status")
-		switch status {
-		case cache.SessionStatusPendingWallet:
-			timeout = cache.WalletConnectExpiration
-		case cache.SessionStatusPendingSignature:
-			timeout = cache.SignMessageExpiration
-		default:
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
-			return
-		}
-
+	router.PATCH("/session/:id", func(c *gin.Context) {
 		sessionId := c.Param("id")
-		if _, err := cache.GetSession(c, sessionId); err != nil {
+
+		session, err := cache.GetSession(c, sessionId)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, sessionError())
 			return
 		}
 
-		if err := cache.UpdateSession(c, sessionId, status, timeout); err != nil {
+		var reqBody struct {
+			Status *string `json:"status,omitempty" binding:"omitempty,oneof=started pending_wallet pending_signature"`
+			Wallet *string `json:"wallet,omitempty"`
+		}
+		if err := c.ShouldBindJSON(&reqBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+			return
+		}
+
+		var timeout time.Duration
+
+		if reqBody.Status == nil {
+			if reqBody.Wallet == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "missing status or wallet"})
+				return
+			}
+
+			session.Wallet = reqBody.Wallet
+			timeout = 30 * time.Second
+		} else {
+			switch *reqBody.Status {
+			case cache.SessionStatusPendingWallet:
+				timeout = 30 * time.Second
+			case cache.SessionStatusPendingSignature:
+				timeout = 30 * time.Second
+			default:
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
+				return
+			}
+
+			session.Status = *reqBody.Status
+		}
+
+		if err := session.Save(c, timeout); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -65,12 +87,13 @@ func DeleteSession(router *gin.RouterGroup) {
 	router.DELETE("/session/:id", func(c *gin.Context) {
 		sessionId := c.Param("id")
 
-		if _, err := cache.GetSession(c, sessionId); err != nil {
+		session, err := cache.GetSession(c, sessionId)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, sessionError())
 			return
 		}
 
-		if err := cache.DeleteSession(c, sessionId); err != nil {
+		if err := session.Delete(c); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -79,17 +102,30 @@ func DeleteSession(router *gin.RouterGroup) {
 	})
 }
 
-func StreamSessionEvents(router *gin.RouterGroup) {
-	router.GET("/session/:id/events", func(c *gin.Context) {
+func StreamSession(router *gin.RouterGroup) {
+	router.GET("/session/:id/stream", func(c *gin.Context) {
 		sessionId := c.Param("id")
+		session, err := cache.GetSession(c, sessionId)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, sessionError())
+			return
+		}
 
-		c.SSEvent()
-		
-		// SSE for streaming session events
-		c.Stream(func(w io.Writer) bool {
-			// Implement SSE logic here
+		sessionChan := session.StreamSession(c.Request.Context())
 
-			return true
+		c.Stream(func(_ io.Writer) bool {
+			select {
+			case status, ok := <-sessionChan:
+				if !ok {
+					log.Info("Channel closed, stopping stream")
+					return false
+				}
+				log.Info("Streaming session status:", status)
+				c.SSEvent("status", status)
+				return true
+			case <-c.Request.Context().Done():
+				return false
+			}
 		})
 	})
 }

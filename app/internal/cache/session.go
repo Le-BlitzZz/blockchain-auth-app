@@ -2,22 +2,17 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
-
-var Statuses = []string{
-	SessionStatusStarted,
-	SessionStatusPendingWallet,
-	SessionStatusPendingSignature,
-}
 
 const (
 	SessionStatusStarted          = "started"
 	SessionStatusPendingWallet    = "pending_wallet"
+	SessionStatusWalletConnected  = "wallet_connected"
 	SessionStatusPendingSignature = "pending_signature"
 )
 
@@ -26,79 +21,94 @@ const (
 	SignMessageExpiration   = 15 * time.Second
 )
 
-const sessionPrefix = "session:"
-
 type Session struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
-	Action string `json:"action,omitempty"`
+	ID     string  `json:"id" redis:"id"`
+	Status string  `json:"status" redis:"status"`
+	Action string  `json:"action" redis:"action"`
+	Wallet *string `json:"wallet" redis:"wallet"`
+	Nonce  *string `json:"nonce,omitempty" redis:"nonce"`
 }
 
-func SessionKey(sessionId string) string {
-	return fmt.Sprintf("%s%s", sessionPrefix, sessionId)
-}
-
-func NewSession(ctx context.Context, action string) (*Session, error) {
-	sUUID, err := uuid.NewRandom()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create session ID: %w", err)
-	}
-
-	sId := sUUID.String()
-	if sId == "" {
-		return nil, fmt.Errorf("session ID is empty")
-	}
-
+func NewSession(ctx context.Context, action string) *Session {
 	s := &Session{
-		ID:     sId,
 		Status: SessionStatusStarted,
 		Action: action,
 	}
 
-	data, err := json.Marshal(s)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal session: %w", err)
-	}
-
-	return s, Redis().Set(ctx, SessionKey(sId), data, WalletConnectExpiration).Err()
+	return s
 }
 
-func GetSession(ctx context.Context, sessionId string) (*Session, error) {
-	data, err := Redis().Get(ctx, SessionKey(sessionId)).Result()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session: %w", err)
-	}
-
+func GetSession(ctx context.Context, sId string) (*Session, error) {
 	var s Session
-	if err := json.Unmarshal([]byte(data), &s); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal session: %w", err)
-	}
-
-	return &s, nil
+	return &s, Redis().HGetAll(ctx, sId).Scan(&s)
 }
 
-func UpdateSession(ctx context.Context, sessionId string, status string, timeout time.Duration) error {
-	s, err := GetSession(ctx, sessionId)
+func (s *Session) Create(ctx context.Context) error {
+	sUUID, err := uuid.NewRandom()
 	if err != nil {
-		return fmt.Errorf("failed to get session: %w", err)
+		return fmt.Errorf("failed to create session ID: %w", err)
 	}
 
-	s.Status = status
+	sId := sUUID.String()
+	s.ID = sId
 
-	data, err := json.Marshal(s)
+	return Redis().HSet(ctx, s.ID, s).Err()
+}
+
+func (s *Session) Save(ctx context.Context, timeout time.Duration) error {
+	err := Redis().HSet(ctx, s.ID, s).Err()
 	if err != nil {
-		return fmt.Errorf("failed to marshal session: %w", err)
+		return err
 	}
 
-	return Redis().Set(ctx, SessionKey(sessionId), data, timeout).Err()
+	if timeout > 0 {
+		return Redis().Expire(ctx, s.ID, timeout).Err()
+	}
+
+	return nil
 }
 
-func DeleteSession(ctx context.Context, sessionId string) error {
-	return Redis().Del(ctx, SessionKey(sessionId)).Err()
+func (s *Session) Delete(ctx context.Context) error {
+	return Redis().Del(ctx, s.ID).Err()
 }
 
-func Sub(ctx context.Context) {
-	Redis().PSubscribe(ctx, "").Channel(
-		
-	)
-} 
+func (s *Session) StreamSession(ctx context.Context) <-chan string {
+	out := make(chan string)
+
+	channel := "__keyspace@0__:" + s.ID
+	pubsub := Redis().PSubscribe(ctx, channel)
+
+	go func() {
+		defer close(out)
+		defer pubsub.Close()
+
+		for {
+			select {
+			case msg, ok := <-pubsub.Channel():
+				if !ok {
+					return
+				}
+				switch msg.Payload {
+				case "hset":
+					updatedSess, err := GetSession(ctx, s.ID)
+					if err != nil {
+						log.Error("Failed to get session:", err)
+						return
+					}
+					if updatedSess.Status != s.Status {
+						out <- updatedSess.Status
+					}
+					*s = *updatedSess
+				case "del", "expired":
+					out <- "gone"
+					return
+				}
+
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return out
+}

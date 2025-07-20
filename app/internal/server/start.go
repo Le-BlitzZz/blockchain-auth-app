@@ -16,7 +16,7 @@ func Start(ctx context.Context, conf *config.Config) {
 
 	router.LoadHTMLGlob("assets/templates/*")
 
-	registerRoutes(router, conf)
+	registerRoutes(router)
 
 	server := &http.Server{
 		Handler: router,

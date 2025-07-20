@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/cache"
 	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/config"
 	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/server"
-	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/request"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -37,7 +37,7 @@ func run(ctx *cli.Context) error {
 		return err
 	}
 
-	request.SetRedis(conf.Redis())
+	cache.SetRedis(conf.Redis())
 
 	cctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 

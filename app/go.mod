@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	github.com/ethereum/go-ethereum v1.12.1
 	github.com/urfave/cli/v2 v2.27.6
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -48,7 +49,6 @@ require (
 	golang.org/x/text v0.15.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
