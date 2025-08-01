@@ -27,7 +27,7 @@
   await sleep(1000);
 
   if (!window.ethereum) {
-    deleteSession();
+    await deleteSession();
   }
 
   let address;
@@ -46,7 +46,7 @@
     try {
       [address] = await ethereum.request({ method: "eth_requestAccounts" });
     } catch (err) {
-      deleteSession();
+      await deleteSession();
       return;
     }
   }
@@ -59,18 +59,31 @@
   if (!updWalletRes.ok) throw new Error("Failed to update session");
   const { message } = await updWalletRes.json();
 
-  const signature = await ethereum.request({
-    method: "personal_sign",
-    params: [message, address],
-  });
+  try {
+    console.log("waiting");
+    const signature = await ethereum.request({
+      method: "personal_sign",
+      params: [message, address],
+    });
+    
+    const updSignatureRes = await fetch(`http://localhost:8080/api/session/${sid}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signature }),
+    });
+    if (!updSignatureRes.ok) throw new Error("Verification failed");
+  } catch (err) {
+    const updDeclinedRes = await fetch(
+      `http://localhost:8080/api/session/${sid}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "declined_signature" }),
+      }
+    );
 
-  const updSignatureRes = await fetch(`http://localhost:8080/api/session/${sid}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ signature }),
-  });
-  if (!updSignatureRes.ok) throw new Error("Verification failed");
-
+    await deleteSession();
+  }
   es.close();
   window.close();
 })();

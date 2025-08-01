@@ -15,10 +15,11 @@ const (
 )
 
 const (
-	SessionStatusStarted          = "started"
-	SessionStatusPendingWallet    = "pending_wallet"
-	SessionStatusPendingSignature = "pending_signature"
-	SessionStatusVerified         = "verified"
+	SessionStatusStarted           = "started"
+	SessionStatusPendingWallet     = "pending_wallet"
+	SessionStatusPendingSignature  = "pending_signature"
+	SessionStatusDeclinedSignature = "declined_signature"
+	SessionStatusVerified          = "verified"
 )
 
 type Session struct {

@@ -46,7 +46,7 @@ func UpdateSession(router *gin.RouterGroup) {
 		}
 
 		var reqBody struct {
-			Status    *string `json:"status,omitempty" binding:"omitempty,oneof=started pending_wallet"`
+			Status    *string `json:"status,omitempty" binding:"omitempty,oneof=started pending_wallet declined_signature"`
 			Wallet    *string `json:"wallet,omitempty"`
 			Signature *string `json:"signature,omitempty"`
 		}
@@ -108,7 +108,14 @@ func UpdateSession(router *gin.RouterGroup) {
 			switch *reqBody.Status {
 			case cache.SessionStatusPendingWallet:
 				timeout = 30 * time.Second
+			case cache.SessionStatusDeclinedSignature:
+				if session.Status != cache.SessionStatusPendingSignature {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "cannot decline signature in current state"})
+					return
+				}
+				session.Status = cache.SessionStatusDeclinedSignature
 			default:
+				timeout = 5 * time.Second
 				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
 				return
 			}
@@ -137,7 +144,7 @@ func DeleteSession(router *gin.RouterGroup) {
 			return
 		}
 
-		if session.Status != cache.SessionStatusStarted &&
+		if session.Status != cache.SessionStatusStarted && session.Status != cache.SessionStatusDeclinedSignature &&
 			(session.Status != cache.SessionStatusVerified || session.Result == nil) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot delete session in current state"})
 			return

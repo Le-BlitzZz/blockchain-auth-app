@@ -59,6 +59,8 @@ func triggerAction(action string) cli.ActionFunc {
 							fmt.Println(result)
 							return
 						}
+					case session.DeclinedSignature:
+						currentStatus = session.DeclinedSignature
 					case session.Gone:
 						if currentStatus == session.Started {
 							fmt.Println("Please install MetaMask and retry the action.")
@@ -67,6 +69,11 @@ func triggerAction(action string) cli.ActionFunc {
 
 						if currentStatus == session.PendingWallet {
 							fmt.Println("Wallet connection timed out. Please retry the action.")
+							return
+						}
+
+						if currentStatus == session.DeclinedSignature {
+							fmt.Println("Signature request declined. Please retry the action.")
 							return
 						}
 

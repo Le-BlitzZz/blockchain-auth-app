@@ -25,6 +25,8 @@ func Stream(ctx context.Context, sessionID string) <-chan Status {
 				status = PendingWallet
 			case "pending_signature":
 				status = PendingSignature
+			case "declined_signature":
+				status = DeclinedSignature
 			case "verified":
 				status = Verified
 			case "gone":
