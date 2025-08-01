@@ -25,7 +25,7 @@ func Start(action string) (string, error) {
 		return "", err
 	}
 
-	resp, err := http.Post(
+	resp, err := httpClient.Post(
 		"http://localhost:8080/api/session",
 		"application/json",
 		bytes.NewBuffer(reqBody),
@@ -53,7 +53,7 @@ func Finish(sessionID string) (string, error) {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to finish session: %w", err)
 	}

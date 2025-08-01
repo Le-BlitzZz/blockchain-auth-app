@@ -14,8 +14,8 @@ bin/
 .DS_Store
 
 # Client certs
-/client/certs/ca.key
-/client/certs/client.key
+/client/cmd/client/certs/ca.key
+/client/cmd/client/certs/client.key
 
 # OpenSSL serial files
-/client/certs/*.srl
+/client/cmd/client/certs/*.srl

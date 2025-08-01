@@ -1,7 +1,7 @@
 .PHONY: build
 
 build:
-	go build -o bin/client ./cmd/client/main.go
+	go build -o bin/client ./cmd/client
 
 start:
 	./bin/client
