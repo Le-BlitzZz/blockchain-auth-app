@@ -12,3 +12,10 @@ bin/
 .vscode
 .idea
 .DS_Store
+
+# Client certs
+/client/certs/ca.key
+/client/certs/client.key
+
+# OpenSSL serial files
+/client/certs/*.srl
