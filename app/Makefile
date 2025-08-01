@@ -1,6 +1,10 @@
 up:
 	docker compose up -d
 
+reup:
+	docker compose down -v
+	docker compose up -d
+
 down:
 	docker compose down
 

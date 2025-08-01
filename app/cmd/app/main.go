@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/app"
 	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/cache"
 	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/config"
 	"github.com/Le-BlitzZz/blockchain-auth-app/app/internal/server"
@@ -37,6 +38,7 @@ func run(ctx *cli.Context) error {
 		return err
 	}
 
+	app.SetConfig(conf)
 	cache.SetRedis(conf.Redis())
 
 	cctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)

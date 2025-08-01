@@ -10,23 +10,26 @@ import (
 )
 
 const (
-	SessionStatusStarted          = "started"
-	SessionStatusPendingWallet    = "pending_wallet"
-	SessionStatusWalletConnected  = "wallet_connected"
-	SessionStatusPendingSignature = "pending_signature"
-)
-
-const (
 	WalletConnectExpiration = 15 * time.Second
 	SignMessageExpiration   = 15 * time.Second
 )
 
+const (
+	SessionStatusStarted          = "started"
+	SessionStatusPendingWallet    = "pending_wallet"
+	SessionStatusPendingSignature = "pending_signature"
+	SessionStatusVerified         = "verified"
+)
+
 type Session struct {
-	ID     string  `json:"id" redis:"id"`
-	Status string  `json:"status" redis:"status"`
-	Action string  `json:"action" redis:"action"`
-	Wallet *string `json:"wallet" redis:"wallet"`
-	Nonce  *string `json:"nonce,omitempty" redis:"nonce"`
+	ID        string  `json:"id" redis:"id"`
+	Status    string  `json:"status" redis:"status"`
+	Action    string  `json:"action" redis:"action"`
+	Wallet    *string `json:"wallet" redis:"wallet"`
+	Nonce     *string `json:"nonce,omitempty" redis:"nonce"`
+	Message   *string `json:"message,omitempty" redis:"message"`
+	Signature *string `json:"signature,omitempty" redis:"signature"`
+	Result    *string `json:"result,omitempty" redis:"result"`
 }
 
 func NewSession(ctx context.Context, action string) *Session {
@@ -39,6 +42,15 @@ func NewSession(ctx context.Context, action string) *Session {
 }
 
 func GetSession(ctx context.Context, sId string) (*Session, error) {
+	exists, err := Redis().Exists(ctx, sId).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	if exists == 0 {
+		return nil, fmt.Errorf("session not found")
+	}
+
 	var s Session
 	return &s, Redis().HGetAll(ctx, sId).Scan(&s)
 }

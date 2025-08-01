@@ -107,9 +107,6 @@ func verifyEthereumSignature(address, message, signature string) bool {
 	expectedAddress := common.HexToAddress(address)
 
 	isValid := recoveredAddress == expectedAddress
-	fmt.Printf("Expected: %s\n", expectedAddress.Hex())
-	fmt.Printf("Recovered: %s\n", recoveredAddress.Hex())
-	fmt.Printf("Valid: %t\n", isValid)
 
 	return isValid
 }

@@ -24,7 +24,9 @@ services:
       - "./:/usr/src/app"
     ports:
       - "8545:8545"
-    command: ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
+    command: >
+      sh -c "npm install --no-progress &&
+            npx hardhat node --hostname 0.0.0.0"
 
 volumes:
   go-mod:

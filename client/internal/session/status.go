@@ -5,7 +5,7 @@ type Status int
 const (
 	Started Status = iota
 	PendingWallet
-	WalletConnected
 	PendingSignature
+	Verified
 	Gone
 )

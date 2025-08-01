@@ -36,12 +36,12 @@
   if (accounts.length) {
     address = accounts[0];
   } else {
-    const updRes = await fetch(`/api/session/${sid}`, {
+    const updPendingWalletRes = await fetch(`/api/session/${sid}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "pending_wallet" }),
     });
-    if (!updRes.ok) throw new Error("Failed to update session");
+    if (!updPendingWalletRes.ok) throw new Error("Failed to update session");
 
     try {
       [address] = await ethereum.request({ method: "eth_requestAccounts" });
@@ -51,52 +51,28 @@
     }
   }
 
-  console.log("Connected wallet address:", address);
-  const updRes = await fetch(`/api/session/${sid}`, {
+  const updWalletRes = await fetch(`/api/session/${sid}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ wallet: address }),
   });
-  if (!updRes.ok) throw new Error("Failed to update session");
+  if (!updWalletRes.ok) throw new Error("Failed to update session");
+  const { message } = await updWalletRes.json();
 
-  // const updRes = await fetch(`http://localhost:8080/api/session/${sid}`, {
-  //   method: "PATCH",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify({ status: "pending_wallet" }),
-  // });
-  // if (!updRes.ok) throw new Error("Failed to update session");
+  const signature = await ethereum.request({
+    method: "personal_sign",
+    params: [message, address],
+  });
 
-  // await sleep(12000);
+  const updSignatureRes = await fetch(`http://localhost:8080/api/session/${sid}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ signature }),
+  });
+  if (!updSignatureRes.ok) throw new Error("Verification failed");
 
-  // try {
-  //   const [address] = await ethereum.request({ method: "eth_requestAccounts" });
-
-  //   const authRes = await fetch("http://localhost:8080/api/auth", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ session_id, address }),
-  //   });
-  //   if (!authRes.ok) throw new Error("Auth failed");
-  //   const { message } = await authRes.json();
-
-  //   window.onbeforeunload = () => "Please wait—verifying your signature...";
-  //   const signature = await ethereum.request({
-  //     method: "personal_sign",
-  //     params: [message, address],
-  //   });
-
-  //   const verifyRes = await fetch("http://localhost:8080/api/verify", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ session_id, message, signature }),
-  //   });
-  //   if (!verifyRes.ok) throw new Error("Verification failed");
-
-  //   window.onbeforeunload = null;
-  // } catch (err) {
-  //   window.onbeforeunload = null;
-  //   console.error(err);
-  // }
+  es.close();
+  window.close();
 })();
 
 function sleep(ms) {
