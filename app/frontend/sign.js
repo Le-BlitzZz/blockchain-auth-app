@@ -13,7 +13,6 @@
 
   const es = new EventSource(`/api/session/${sid}/stream`);
   es.addEventListener("status", async (e) => {
-    console.log("Received status:", e.data);
     if (e.data === "gone") {
       es.close();
       window.close();
@@ -60,7 +59,6 @@
   const { message } = await updWalletRes.json();
 
   try {
-    console.log("waiting");
     const signature = await ethereum.request({
       method: "personal_sign",
       params: [message, address],

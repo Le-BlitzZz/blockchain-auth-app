@@ -65,12 +65,15 @@ func (s *Session) Create(ctx context.Context) error {
 	sId := sUUID.String()
 	s.ID = sId
 
-	return Redis().HSet(ctx, s.ID, s).Err()
+	if err := Redis().HSet(ctx, s.ID, s).Err(); err != nil {
+		return err
+	}
+
+	return Redis().Expire(ctx, s.ID, 4 * time.Minute).Err() // Set a default expiration time
 }
 
 func (s *Session) Save(ctx context.Context, timeout time.Duration) error {
-	err := Redis().HSet(ctx, s.ID, s).Err()
-	if err != nil {
+	if err := Redis().HSet(ctx, s.ID, s).Err(); err != nil {
 		return err
 	}
 
