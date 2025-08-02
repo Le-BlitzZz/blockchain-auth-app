@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  backend:
+    image: ghcr.io/le-blitzzz/blockchain-auth-app/backend:sepolia
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on: [redis]
+
+  redis:
+    image: redis:alpine
+    command: ["redis-server", "--notify-keyspace-events", "KEA"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  redis-data:
