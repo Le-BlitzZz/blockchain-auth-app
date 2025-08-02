@@ -13,9 +13,5 @@ bin/
 .idea
 .DS_Store
 
-# Client certs
-/client/cmd/client/certs/ca.key
-/client/cmd/client/certs/client.key
-
-# OpenSSL serial files
-/client/cmd/client/certs/*.srl
+app/configs/testnet.yml
+.env

@@ -22,7 +22,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "defaults-yaml",
 				Aliases: []string{"y"},
-				Value:   "configs/local-docker.yaml",
+				Value:   "configs/local.yml",
 			},
 		},
 	}

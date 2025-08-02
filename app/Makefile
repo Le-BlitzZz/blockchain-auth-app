@@ -26,12 +26,25 @@ build:
 start:
 	./bin/app
 
+start-testnet:
+	./bin/app -y "configs/testnet.yml"
+
+
 deps:
 	npm install
+	npm install --save-dev dotenv
 	make deploy
+
+deps-testnet:
+	npm install
+	npm install --save-dev dotenv
+	make deploy-testnet
 
 deploy:
 	npx hardhat run --network localhost scripts/deploy.js
+
+deploy-testnet:
+	npx hardhat run --network sepolia scripts/deploy.js
 
 compile:
 	npx hardhat compile

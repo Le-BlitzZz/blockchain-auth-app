@@ -23,9 +23,8 @@ type Options struct {
 func NewOptions(ctx *cli.Context) *Options {
 	o := &Options{}
 
-	defaultsYaml := ctx.String("defaults-yaml")
-	if defaultsYaml == "" {
-		log.Tracef("config: defaults file was not specified")
+	if err := o.Load(ctx.String("defaults-yaml")); err != nil {
+		log.Warnf("config: failed to load defaults file: %v", err)
 	}
 
 	return o
