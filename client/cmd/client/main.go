@@ -9,8 +9,6 @@ import (
 )
 
 func main() {
-	setup()
-
 	app := cli.NewApp()
 
 	app.Name = "A client of the blockchain-auth-app"

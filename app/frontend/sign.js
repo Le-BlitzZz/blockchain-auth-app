@@ -81,6 +81,7 @@
         body: JSON.stringify({ status: "declined_signature" }),
       }
     );
+    if (!updDeclinedRes.ok) throw new Error("Verification failed");
 
     await deleteSession();
   }
