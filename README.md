@@ -24,7 +24,7 @@ Users authenticate by signing a nonce in MetaMask; the backend checks ownership 
 
 3. **Grab the CLI**
 
-   * Visit the [v1.0.0 release](https://github.com/Le-BlitzZz/blockchain-auth-app/releases/tag/v1.0.0).
+   * Visit the [v1.1.0 release](https://github.com/Le-BlitzZz/blockchain-auth-app/releases/tag/v1.1.0).
    * Download the tarball for your OS / CPU.
    * Extract it; the binary is called `blockchain-auth-client`.
 
