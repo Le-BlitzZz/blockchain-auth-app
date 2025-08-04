@@ -23,6 +23,8 @@ func Stream(ctx context.Context, sessionID string) <-chan Status {
 			switch data {
 			case "pending_wallet":
 				status = PendingWallet
+			case "declined_wallet":
+				status = DeclinedWallet
 			case "pending_signature":
 				status = PendingSignature
 			case "declined_signature":

@@ -46,6 +46,8 @@ func triggerAction(action string) cli.ActionFunc {
 							fmt.Println("Please connect your wallet to continue within 30 seconds.")
 							currentStatus = session.PendingWallet
 						}
+					case session.DeclinedWallet:
+						currentStatus = session.DeclinedWallet
 					case session.PendingSignature:
 						if currentStatus == session.Started || currentStatus == session.PendingWallet {
 							fmt.Println("Please sign the message to continue within 30 seconds.")
@@ -69,6 +71,11 @@ func triggerAction(action string) cli.ActionFunc {
 
 						if currentStatus == session.PendingWallet {
 							fmt.Println("Wallet connection timed out. Please retry the action.")
+							return
+						}
+
+						if currentStatus == session.DeclinedWallet {
+							fmt.Println("Wallet connection declined. Please retry the action.")
 							return
 						}
 

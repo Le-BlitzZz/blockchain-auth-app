@@ -46,7 +46,7 @@ func UpdateSession(router *gin.RouterGroup) {
 		}
 
 		var reqBody struct {
-			Status    *string `json:"status,omitempty" binding:"omitempty,oneof=started pending_wallet declined_signature"`
+			Status    *string `json:"status,omitempty" binding:"omitempty,oneof=started pending_wallet declined_wallet declined_signature"`
 			Wallet    *string `json:"wallet,omitempty"`
 			Signature *string `json:"signature,omitempty"`
 		}
@@ -114,6 +114,12 @@ func UpdateSession(router *gin.RouterGroup) {
 					return
 				}
 				session.Status = cache.SessionStatusDeclinedSignature
+			case cache.SessionStatusDeclinedWallet:
+				if session.Status != cache.SessionStatusPendingWallet {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "cannot decline wallet in current state"})
+					return
+				}
+				session.Status = cache.SessionStatusDeclinedWallet
 			default:
 				timeout = 5 * time.Second
 				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
@@ -144,7 +150,8 @@ func DeleteSession(router *gin.RouterGroup) {
 			return
 		}
 
-		if session.Status != cache.SessionStatusStarted && session.Status != cache.SessionStatusDeclinedSignature &&
+		if session.Status != cache.SessionStatusStarted && session.Status != cache.SessionStatusDeclinedWallet &&
+			session.Status != cache.SessionStatusDeclinedSignature &&
 			(session.Status != cache.SessionStatusVerified || session.Result == nil) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot delete session in current state"})
 			return

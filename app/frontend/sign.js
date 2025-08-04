@@ -45,8 +45,17 @@
     try {
       [address] = await ethereum.request({ method: "eth_requestAccounts" });
     } catch (err) {
+      const updDeclinedWallet = await fetch(
+        `http://localhost:8080/api/session/${sid}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "declined_wallet" }),
+        }
+      );
+      if (!updDeclinedWallet.ok) throw new Error("Wallet connection failed");
+
       await deleteSession();
-      return;
     }
   }
 

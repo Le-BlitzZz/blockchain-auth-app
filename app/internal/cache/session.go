@@ -10,13 +10,9 @@ import (
 )
 
 const (
-	WalletConnectExpiration = 15 * time.Second
-	SignMessageExpiration   = 15 * time.Second
-)
-
-const (
 	SessionStatusStarted           = "started"
 	SessionStatusPendingWallet     = "pending_wallet"
+	SessionStatusDeclinedWallet    = "declined_wallet"
 	SessionStatusPendingSignature  = "pending_signature"
 	SessionStatusDeclinedSignature = "declined_signature"
 	SessionStatusVerified          = "verified"
@@ -69,7 +65,7 @@ func (s *Session) Create(ctx context.Context) error {
 		return err
 	}
 
-	return Redis().Expire(ctx, s.ID, 4 * time.Minute).Err() // Set a default expiration time
+	return Redis().Expire(ctx, s.ID, 4*time.Minute).Err() // Set a default expiration time
 }
 
 func (s *Session) Save(ctx context.Context, timeout time.Duration) error {
